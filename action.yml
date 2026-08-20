@@ -1,0 +1,32 @@
+name: Notify PR Author of Unresolved Copilot Threads
+description: Notify a pull request author about unresolved Copilot review threads after all reviewers approve
+author: kreuz123
+branding:
+  icon: message-circle
+  color: blue
+
+inputs:
+  token:
+    description: GitHub token for API access
+    required: false
+    default: ${{ github.token }}
+  pr-number:
+    description: Pull request number
+    required: false
+    default: ${{ github.event.pull_request.number }}
+  all-approved:
+    description: Whether the independent check-all-reviewers-approved action found all reviewers approved
+    required: false
+    default: "true"
+
+outputs:
+  has-unresolved:
+    description: Whether unresolved Copilot threads were found
+  unresolved-count:
+    description: Number of unresolved Copilot threads
+  thread-list:
+    description: Markdown list of unresolved Copilot threads
+
+runs:
+  using: node24
+  main: dist/index.js
