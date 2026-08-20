@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   notify:
-    if: github.event.review.state == 'APPROVED'
+    if: ${{ github.event.review.state == 'APPROVED' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check approval status
