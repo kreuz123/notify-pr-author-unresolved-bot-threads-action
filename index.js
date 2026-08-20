@@ -9,6 +9,8 @@ async function run() {
   try {
     if (core.getInput("all-approved").toLowerCase() !== "true") {
       core.setOutput("has-unresolved", "false");
+      core.setOutput("unresolved-count", "0");
+      core.setOutput("thread-list", "");
       return;
     }
 
