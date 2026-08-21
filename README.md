@@ -1,4 +1,4 @@
-# notify-pr-author-unresolved-copilot-threads-action
+# notify-pr-author-unresolved-bot-threads-action
 
 Notifies the pull request author when all requested human reviewers have
 approved but unresolved review threads started by an automated reviewer
@@ -41,7 +41,7 @@ jobs:
           pr-number: ${{ github.event.pull_request.number }}
 
       - name: Notify about unresolved automated review threads
-        uses: kreuz123/notify-pr-author-unresolved-copilot-threads-action@v1
+        uses: kreuz123/notify-pr-author-unresolved-bot-threads-action@v1
         with:
           pr-number: ${{ github.event.pull_request.number }}
           all-approved: ${{ steps.approval.outputs.all-approved }}
