@@ -1,7 +1,7 @@
 {
   "name": "notify-pr-author-unresolved-copilot-threads-action",
   "version": "1.0.0",
-  "description": "Notify pull request authors about unresolved Copilot review threads",
+  "description": "Notify pull request authors about unresolved automated reviewer (bot) threads",
   "main": "index.js",
   "scripts": {
     "build": "ncc build index.js --license licenses.txt",

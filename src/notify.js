@@ -7,7 +7,7 @@ const REVIEW_THREADS_QUERY = `
             isResolved
             comments(first: 1) {
               nodes {
-                author { login }
+                author { login __typename }
                 body
                 url
               }
@@ -20,17 +20,16 @@ const REVIEW_THREADS_QUERY = `
   }
 `;
 
-function isCopilotComment(comment) {
-  const login = comment?.author?.login;
-  return Boolean(
-    login &&
-      (login === "Copilot" ||
-        login.toLowerCase().includes("copilot") ||
-        login === "github-actions[bot]"),
-  );
+// GitHub's GraphQL API tags every Actor with a __typename. App/bot accounts
+// (Copilot, Dependabot, and any other review-bot integration) are reported as
+// "Bot", regardless of their login name. Checking the type instead of
+// matching login strings means we don't need to maintain a list of known bot
+// logins, and automatically cover any bot added in the future.
+function isBotComment(comment) {
+  return comment?.author?.__typename === "Bot";
 }
 
-async function findUnresolvedCopilotThreads(client, owner, repo, prNumber) {
+async function findUnresolvedBotThreads(client, owner, repo, prNumber) {
   const threads = [];
   let after = null;
   let hasNextPage = true;
@@ -48,7 +47,7 @@ async function findUnresolvedCopilotThreads(client, owner, repo, prNumber) {
         (thread) =>
           !thread.isResolved &&
           thread.comments.nodes.length > 0 &&
-          isCopilotComment(thread.comments.nodes[0]),
+          isBotComment(thread.comments.nodes[0]),
       ),
     );
     hasNextPage = reviewThreads.pageInfo.hasNextPage;
@@ -69,4 +68,4 @@ function formatThreadList(threads, previewLength = 70) {
     .join("\n");
 }
 
-module.exports = { findUnresolvedCopilotThreads, formatThreadList, isCopilotComment };
+module.exports = { findUnresolvedBotThreads, formatThreadList, isBotComment };

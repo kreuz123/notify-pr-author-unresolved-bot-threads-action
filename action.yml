@@ -1,5 +1,5 @@
-name: Notify PR Author of Unresolved Copilot Threads
-description: Notify a pull request author about unresolved Copilot review threads after all reviewers approve
+name: Notify PR Author of Unresolved Bot Review Threads
+description: Notify a pull request author about unresolved automated reviewer (bot) threads after all reviewers approve
 author: kreuz123
 branding:
   icon: message-circle
@@ -21,11 +21,11 @@ inputs:
 
 outputs:
   has-unresolved:
-    description: Whether unresolved Copilot threads were found
+    description: Whether unresolved bot review threads were found
   unresolved-count:
-    description: Number of unresolved Copilot threads
+    description: Number of unresolved bot review threads
   thread-list:
-    description: Markdown list of unresolved Copilot threads
+    description: Markdown list of unresolved bot review threads
 
 runs:
   using: node24

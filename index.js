@@ -1,7 +1,7 @@
 const core = require("@actions/core");
 const github = require("@actions/github");
 const {
-  findUnresolvedCopilotThreads,
+  findUnresolvedBotThreads,
   formatThreadList,
 } = require("./src/notify");
 
@@ -24,7 +24,7 @@ async function run() {
     const token = core.getInput("token");
     const client = github.getOctokit(token);
     const { owner, repo } = github.context.repo;
-    const threads = await findUnresolvedCopilotThreads(client, owner, repo, prNumber);
+    const threads = await findUnresolvedBotThreads(client, owner, repo, prNumber);
     const threadList = formatThreadList(threads);
     const count = threads.length.toString();
 
@@ -42,8 +42,8 @@ async function run() {
       repo,
       issue_number: prNumber,
       body: `@${prAuthor} All reviewers have approved this PR! 🎉\n\n` +
-        `However, there are ${count} unresolved Copilot review thread(s) that need your attention. Please resolve these conversations.\n\n` +
-        `**Unresolved Copilot threads:**\n\n${threadList}`,
+        `However, there are ${count} unresolved review thread(s) started by an automated reviewer (e.g. Copilot) that need your attention. Please resolve these conversations.\n\n` +
+        `**Unresolved automated review threads:**\n\n${threadList}`,
     });
   } catch (error) {
     core.setFailed(`Action failed: ${error.message}`);

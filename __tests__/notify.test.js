@@ -1,22 +1,29 @@
 const {
-  findUnresolvedCopilotThreads,
+  findUnresolvedBotThreads,
   formatThreadList,
-  isCopilotComment,
+  isBotComment,
 } = require("../src/notify");
 
-describe("isCopilotComment", () => {
-  test.each(["Copilot", "copilot[bot]", "github-actions[bot]"])(
-    "recognizes %s",
-    (login) => expect(isCopilotComment({ author: { login } })).toBe(true),
+describe("isBotComment", () => {
+  test.each(["Copilot", "dependabot[bot]", "sonarqubecloud[bot]"])(
+    "recognizes %s as a bot when __typename is Bot",
+    (login) =>
+      expect(isBotComment({ author: { login, __typename: "Bot" } })).toBe(true),
   );
 
-  test("rejects human comments", () => {
-    expect(isCopilotComment({ author: { login: "octocat" } })).toBe(false);
+  test("rejects human comments even if the login looks bot-like", () => {
+    expect(
+      isBotComment({ author: { login: "copilot-fan", __typename: "User" } }),
+    ).toBe(false);
+  });
+
+  test("rejects comments with no author", () => {
+    expect(isBotComment({ author: null })).toBe(false);
   });
 });
 
-describe("findUnresolvedCopilotThreads", () => {
-  test("filters unresolved Copilot threads across pages", async () => {
+describe("findUnresolvedBotThreads", () => {
+  test("filters unresolved bot threads across pages", async () => {
     const client = {
       graphql: jest
         .fn()
@@ -28,7 +35,13 @@ describe("findUnresolvedCopilotThreads", () => {
                   {
                     isResolved: false,
                     comments: {
-                      nodes: [{ author: { login: "Copilot" }, body: "fix", url: "url" }],
+                      nodes: [
+                        {
+                          author: { login: "Copilot", __typename: "Bot" },
+                          body: "fix",
+                          url: "url",
+                        },
+                      ],
                     },
                   },
                 ],
@@ -45,7 +58,25 @@ describe("findUnresolvedCopilotThreads", () => {
                   {
                     isResolved: true,
                     comments: {
-                      nodes: [{ author: { login: "Copilot" }, body: "done", url: "url" }],
+                      nodes: [
+                        {
+                          author: { login: "Copilot", __typename: "Bot" },
+                          body: "done",
+                          url: "url",
+                        },
+                      ],
+                    },
+                  },
+                  {
+                    isResolved: false,
+                    comments: {
+                      nodes: [
+                        {
+                          author: { login: "octocat", __typename: "User" },
+                          body: "human comment",
+                          url: "url",
+                        },
+                      ],
                     },
                   },
                 ],
@@ -56,7 +87,7 @@ describe("findUnresolvedCopilotThreads", () => {
         }),
     };
 
-    await expect(findUnresolvedCopilotThreads(client, "owner", "repo", 1)).resolves.toHaveLength(1);
+    await expect(findUnresolvedBotThreads(client, "owner", "repo", 1)).resolves.toHaveLength(1);
     expect(client.graphql).toHaveBeenCalledTimes(2);
   });
 });
