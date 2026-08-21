@@ -14,6 +14,10 @@ const github = require("@actions/github");
 const { findUnresolvedBotThreads, formatThreadList } = require("../src/notify");
 const { run } = require("../index");
 
+const DEFAULT_COMMENT_TEMPLATE =
+  "All reviewers have approved this PR! 🎉\n\nHowever, there are {unresolvedCount} unresolved review thread(s) started by an automated reviewer (e.g. Copilot) that need your attention. Please resolve these conversations.\n\n**Unresolved automated review threads:**\n\n{threadList}";
+
+
 describe("run", () => {
   let createComment;
 
@@ -33,6 +37,7 @@ describe("run", () => {
       "all-approved": "true",
       "pr-number": "1",
       token: "token",
+      "comment-template": DEFAULT_COMMENT_TEMPLATE,
     };
     core.getInput = jest.fn((name) => inputs[name] ?? "");
     core.setOutput = jest.fn();
@@ -117,6 +122,31 @@ describe("run", () => {
       "1. [View thread](url) - issue",
     );
     expect(core.setFailed).not.toHaveBeenCalled();
+  });
+
+  test("uses a custom comment-template input when provided", async () => {
+    const inputs = {
+      "all-approved": "true",
+      "pr-number": "1",
+      token: "token",
+      "comment-template": "Hi {author}, please resolve {unresolvedCount} thread(s):\n{threadList}",
+    };
+    core.getInput = jest.fn((name) => inputs[name] ?? "");
+
+    const threads = [
+      { comments: { nodes: [{ body: "issue", url: "url" }] } },
+    ];
+    findUnresolvedBotThreads.mockResolvedValue(threads);
+    formatThreadList.mockReturnValue("1. [View thread](url) - issue");
+
+    await run();
+
+    expect(createComment).toHaveBeenCalledWith({
+      owner: "owner",
+      repo: "repo",
+      issue_number: 1,
+      body: "Hi @author, please resolve 1 thread(s):\n1. [View thread](url) - issue",
+    });
   });
 
   test("does not create a comment when there are no unresolved threads", async () => {

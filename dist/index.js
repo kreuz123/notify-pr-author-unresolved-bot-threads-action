@@ -10,6 +10,7 @@ const {
   findUnresolvedBotThreads,
   formatThreadList,
 } = __nccwpck_require__(2108);
+const { buildCommentBody } = __nccwpck_require__(2337);
 
 async function run() {
   try {
@@ -43,13 +44,18 @@ async function run() {
     const prAuthor = github.context.payload.pull_request?.user?.login;
     if (!prAuthor) throw new Error("Pull request author could not be determined from the event payload.");
 
+    const commentTemplate = core.getInput("comment-template");
+    const commentBody = buildCommentBody(commentTemplate, {
+      author: prAuthor,
+      unresolvedCount: count,
+      threadList,
+    });
+
     await client.rest.issues.createComment({
       owner,
       repo,
       issue_number: prNumber,
-      body: `@${prAuthor} All reviewers have approved this PR! 🎉\n\n` +
-        `However, there are ${count} unresolved review thread(s) started by an automated reviewer (e.g. Copilot) that need your attention. Please resolve these conversations.\n\n` +
-        `**Unresolved automated review threads:**\n\n${threadList}`,
+      body: commentBody,
     });
   } catch (error) {
     core.setFailed(`Action failed: ${error.message}`);
@@ -31878,6 +31884,39 @@ function onParserError (err) {
 module.exports = {
   WebSocket
 }
+
+
+/***/ }),
+
+/***/ 2337:
+/***/ ((module) => {
+
+function renderTemplate(template, values) {
+  return template.replace(/\{(\w+)\}/g, (match, key) =>
+    Object.prototype.hasOwnProperty.call(values, key)
+      ? String(values[key])
+      : match,
+  );
+}
+
+function buildCommentBody(template, { author, unresolvedCount, threadList }) {
+  const mentionsAuthor = template.includes("{author}");
+  const values = {
+    author: `@${author}`,
+    unresolvedCount,
+    threadList,
+  };
+  const message = renderTemplate(template, values);
+  const mentionedMessage = mentionsAuthor ? message : `@${author} ${message}`;
+
+  if (template.includes("{threadList}")) {
+    return mentionedMessage;
+  }
+
+  return `${mentionedMessage}\n\n**Unresolved automated review threads:**\n\n${threadList}`;
+}
+
+module.exports = { buildCommentBody };
 
 
 /***/ }),

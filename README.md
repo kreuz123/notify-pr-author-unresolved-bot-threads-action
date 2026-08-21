@@ -45,8 +45,35 @@ jobs:
         with:
           pr-number: ${{ github.event.pull_request.number }}
           all-approved: ${{ steps.approval.outputs.all-approved }}
+          comment-template: |
+            Hey {author}! There are {unresolvedCount} unresolved automated review thread(s) left:
+            {threadList}
 ```
 
 The action sets `has-unresolved`, `unresolved-count`, and `thread-list`
 outputs. It only creates a comment when unresolved bot review threads are
 found.
+
+### Customizing the comment
+
+The `comment-template` input lets you customize the notification comment.
+It supports the following placeholders:
+
+- `{author}` - mentions the PR author (rendered as `@login`). If omitted
+  from the template, the mention is automatically prepended to the comment.
+- `{unresolvedCount}` - the number of unresolved automated review threads.
+- `{threadList}` - the formatted markdown list of unresolved threads. If
+  omitted from the template, the thread list is automatically appended
+  under a `**Unresolved automated review threads:**` heading.
+
+If `comment-template` is not provided, it defaults to:
+
+```
+All reviewers have approved this PR! 🎉
+
+However, there are {unresolvedCount} unresolved review thread(s) started by an automated reviewer (e.g. Copilot) that need your attention. Please resolve these conversations.
+
+**Unresolved automated review threads:**
+
+{threadList}
+```
