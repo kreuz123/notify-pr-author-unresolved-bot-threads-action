@@ -9,6 +9,7 @@ inputs:
   token:
     description: GitHub token for API access
     required: false
+    default: ${{ github.token }}
   pr-number:
     description: Pull request number
     required: false
