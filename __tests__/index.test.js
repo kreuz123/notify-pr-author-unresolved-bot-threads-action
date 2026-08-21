@@ -37,8 +37,10 @@ describe("run", () => {
     core.getInput = jest.fn((name) => inputs[name] ?? "");
     core.setOutput = jest.fn();
     core.setFailed = jest.fn();
-  });
 
+    findUnresolvedBotThreads.mockResolvedValue([]);
+    formatThreadList.mockReturnValue("");
+  });
 
   test("returns early when all-approved is not true", async () => {
     core.getInput = jest.fn((name) =>
