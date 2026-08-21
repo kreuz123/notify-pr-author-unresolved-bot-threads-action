@@ -4,6 +4,7 @@ const {
   findUnresolvedBotThreads,
   formatThreadList,
 } = require("./src/notify");
+const { buildCommentBody } = require("./src/build-comment");
 
 async function run() {
   try {
@@ -37,13 +38,18 @@ async function run() {
     const prAuthor = github.context.payload.pull_request?.user?.login;
     if (!prAuthor) throw new Error("Pull request author could not be determined from the event payload.");
 
+    const commentTemplate = core.getInput("comment-template");
+    const commentBody = buildCommentBody(commentTemplate, {
+      author: prAuthor,
+      unresolvedCount: count,
+      threadList,
+    });
+
     await client.rest.issues.createComment({
       owner,
       repo,
       issue_number: prNumber,
-      body: `@${prAuthor} All reviewers have approved this PR! 🎉\n\n` +
-        `However, there are ${count} unresolved review thread(s) started by an automated reviewer (e.g. Copilot) that need your attention. Please resolve these conversations.\n\n` +
-        `**Unresolved automated review threads:**\n\n${threadList}`,
+      body: commentBody,
     });
   } catch (error) {
     core.setFailed(`Action failed: ${error.message}`);

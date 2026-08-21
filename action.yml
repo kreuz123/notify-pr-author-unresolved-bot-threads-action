@@ -16,6 +16,10 @@ inputs:
     description: Whether the independent check-all-reviewers-approved action found all reviewers approved
     required: false
     default: "true"
+  comment-template:
+    description: Template for the notification comment. Supports the placeholders {author}, {unresolvedCount}, and {threadList}. If {threadList} is omitted, the thread list is appended automatically.
+    required: false
+    default: "All reviewers have approved this PR! 🎉\n\nHowever, there are {unresolvedCount} unresolved review thread(s) started by an automated reviewer (e.g. Copilot) that need your attention. Please resolve these conversations.\n\n**Unresolved automated review threads:**\n\n{threadList}"
 
 outputs:
   has-unresolved:
