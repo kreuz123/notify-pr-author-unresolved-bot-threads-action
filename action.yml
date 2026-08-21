@@ -9,11 +9,9 @@ inputs:
   token:
     description: GitHub token for API access
     required: false
-    default: ${{ github.token }}
   pr-number:
     description: Pull request number
     required: false
-    default: ${{ github.event.pull_request.number }}
   all-approved:
     description: Whether the independent check-all-reviewers-approved action found all reviewers approved
     required: false
