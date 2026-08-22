@@ -1,21 +1,33 @@
-# notify-pr-author-unresolved-bot-threads-action
+# Notify PR Author of Unresolved Bot Review Threads
 
-Notifies the pull request author when all requested human reviewers have
-approved but unresolved review threads started by an automated reviewer
-(such as Copilot code review, or any other bot/App-based review integration)
-remain.
+A GitHub Action that reminds the PR author to resolve open review threads started by an automated reviewer (e.g. Copilot) once all human reviewers have approved.
 
-Thread authors are identified using GitHub's GraphQL `Actor.__typename`
-field: any comment authored by an account of type `Bot` is treated as an
-automated reviewer comment, regardless of its login name. This means the
-action automatically covers Copilot and any other bot review tool you add in
-the future, without needing to maintain a list of known bot logins.
+## Features
 
-The approval check is intentionally delegated to the independent
-[`check-all-reviewers-approved-action`](https://github.com/kreuz123/check-all-reviewers-approved-action)
-action.
+- ✅ Checks for unresolved review threads started by an automated (bot) reviewer
+- ✅ Posts a reminder comment with links to those threads
+- ✅ Supports a configurable comment template
+- ✅ Handles pagination for review threads
+- ✅ Detects bot authors via GitHub's GraphQL `Actor.__typename` field: most bot/App reviewers (whose accounts GitHub types as `Bot`) are covered automatically, without maintaining a list of known bot logins
+
+## How it works
+
+1. Expects to run after an independent approval check (such as [`check-all-reviewers-approved-action`](https://github.com/kreuz123/check-all-reviewers-approved-action)) and receives its result via the `all-approved` input.
+2. Skips immediately unless `all-approved` is `true`.
+3. Validates the `pr-number` input.
+4. Fetches all review threads with pagination and keeps unresolved threads whose first comment was authored by a `Bot`-type account.
+5. Sets `has-unresolved`, `unresolved-count`, and `thread-list` outputs.
+6. Posts a comment to the PR author only when unresolved bot review threads are found.
+
+## Example reminder comment
+
+The action posts a reminder when there are unresolved threads started by an automated reviewer:
+
+![Example unresolved-thread reminder comment](docs/images/pr-author-reminder.png)
 
 ## Usage
+
+### Basic Usage
 
 ```yaml
 name: Notify PR author of unresolved automated review threads
@@ -25,9 +37,7 @@ on:
     types: [submitted]
 
 permissions:
-  contents: read
   pull-requests: write
-  issues: write
 
 jobs:
   notify:
@@ -45,26 +55,26 @@ jobs:
         with:
           pr-number: ${{ github.event.pull_request.number }}
           all-approved: ${{ steps.approval.outputs.all-approved }}
-          comment-template: |
-            Hey {author}! There are {unresolvedCount} unresolved automated review thread(s) left:
-            {threadList}
 ```
-
-The action sets `has-unresolved`, `unresolved-count`, and `thread-list`
-outputs. It only creates a comment when unresolved bot review threads are
-found.
 
 ### Customizing the comment
 
-The `comment-template` input lets you customize the notification comment.
-It supports the following placeholders:
+Use `comment-template` to customize the reminder comment. The template supports the following placeholders:
 
-- `{author}` - mentions the PR author (rendered as `@login`). If omitted
-  from the template, the mention is automatically prepended to the comment.
-- `{unresolvedCount}` - the number of unresolved automated review threads.
-- `{threadList}` - the formatted markdown list of unresolved threads. If
-  omitted from the template, the thread list is automatically appended
-  under a `**Unresolved automated review threads:**` heading.
+- `{author}` — always renders as an `@mention`, notifying the PR author. If omitted from your template, the mention is prepended automatically.
+- `{unresolvedCount}` — the number of unresolved automated review threads.
+- `{threadList}` — the list of unresolved threads. If omitted from your template, the thread list is appended automatically to ensure it's never lost.
+
+```yaml
+steps:
+  - uses: kreuz123/notify-pr-author-unresolved-bot-threads-action@v1
+    with:
+      pr-number: ${{ github.event.pull_request.number }}
+      all-approved: ${{ steps.approval.outputs.all-approved }}
+      comment-template: |
+        Hey {author}! There are {unresolvedCount} unresolved automated review thread(s) left:
+        {threadList}
+```
 
 If `comment-template` is not provided, it defaults to:
 
@@ -77,3 +87,30 @@ However, there are {unresolvedCount} unresolved review thread(s) started by an a
 
 {threadList}
 ```
+
+## Inputs
+
+| Name               | Required | Default               | Description                                                                                                       |
+| ------------------ | -------- | --------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `token`            | No       | `${{ github.token }}` | GitHub token used to read review threads and post the comment.                                                    |
+| `pr-number`        | No       |                        | Pull request number.                                                                                              |
+| `all-approved`     | No       | `"true"`               | Whether the independent check-all-reviewers-approved action found all reviewers approved.                          |
+| `comment-template` | No       | See `action.yml`      | Template for the reminder comment using `{author}`, `{unresolvedCount}`, and `{threadList}`.                       |
+
+## Outputs
+
+| Name                | Description                                                      |
+| -------------------- | ----------------------------------------------------------------|
+| `has-unresolved`    | Whether unresolved bot review threads were found.                |
+| `unresolved-count`  | Number of unresolved bot review threads.                          |
+| `thread-list`       | Markdown-formatted list of unresolved bot review threads.        |
+
+## Required permissions
+
+The workflow's `GITHUB_TOKEN` needs:
+
+- `pull-requests: write` — to read review threads and post the reminder comment.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
