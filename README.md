@@ -37,7 +37,6 @@ on:
     types: [submitted]
 
 permissions:
-  contents: read
   pull-requests: write
 
 jobs:
