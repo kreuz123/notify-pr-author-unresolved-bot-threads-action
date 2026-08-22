@@ -61,6 +61,42 @@ describe("run", () => {
     expect(findUnresolvedBotThreads).not.toHaveBeenCalled();
   });
 
+  test.each(["True", "TRUE", "tRuE"])(
+    "treats all-approved value %s as approved (case-insensitive)",
+    async (allApproved) => {
+      const inputs = {
+        "all-approved": allApproved,
+        "pr-number": "1",
+        token: "token",
+        "comment-template": DEFAULT_COMMENT_TEMPLATE,
+      };
+      core.getInput = jest.fn((name) => inputs[name] ?? "");
+
+      await run();
+
+      expect(github.getOctokit).toHaveBeenCalled();
+      expect(findUnresolvedBotThreads).toHaveBeenCalled();
+      expect(core.setOutput).toHaveBeenCalledWith("has-unresolved", "false");
+      expect(core.setOutput).toHaveBeenCalledWith("unresolved-count", "0");
+    },
+  );
+
+  test.each(["", "false", "no", "0"])(
+    "treats all-approved value %j as not approved",
+    async (allApproved) => {
+      const inputs = { "all-approved": allApproved, "pr-number": "1", token: "token" };
+      core.getInput = jest.fn((name) => inputs[name] ?? "");
+
+      await run();
+
+      expect(core.setOutput).toHaveBeenCalledWith("has-unresolved", "false");
+      expect(core.setOutput).toHaveBeenCalledWith("unresolved-count", "0");
+      expect(core.setOutput).toHaveBeenCalledWith("thread-list", "");
+      expect(github.getOctokit).not.toHaveBeenCalled();
+      expect(findUnresolvedBotThreads).not.toHaveBeenCalled();
+    },
+  );
+
   test.each(["0", "-1", "abc", "1.5", " ", "3.0"])(
     "setFailed when pr-number is invalid: %s",
     async (prNumber) => {
