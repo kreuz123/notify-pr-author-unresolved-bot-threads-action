@@ -97,4 +97,21 @@ describe("buildCommentBody", () => {
 
     expect(result).toContain("Hello {unknown}, 1 thread(s).");
   });
+
+  test("substitutes all three placeholders together without duplicating author or thread list", () => {
+    const template =
+      "Hey {author}! There are {unresolvedCount} unresolved automated review thread(s) left:\n{threadList}";
+
+    const result = buildCommentBody(template, {
+      author: "octocat",
+      unresolvedCount: 2,
+      threadList: "1. [View thread](url-1)\n2. [View thread](url-2)",
+    });
+
+    expect(result).toBe(
+      "Hey @octocat! There are 2 unresolved automated review thread(s) left:\n1. [View thread](url-1)\n2. [View thread](url-2)",
+    );
+    expect(result.match(/@octocat/g)).toHaveLength(1);
+    expect(result).not.toContain("**Unresolved automated review threads:**");
+  });
 });
