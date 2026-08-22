@@ -8,7 +8,7 @@ A GitHub Action that reminds the PR author to resolve open review threads starte
 - ✅ Posts a reminder comment with links to those threads
 - ✅ Supports a configurable comment template
 - ✅ Handles pagination for review threads
-- ✅ Detects bot authors via GitHub's GraphQL `Actor.__typename` field, so any bot/App reviewer is covered automatically, without maintaining a list of known bot logins
+- ✅ Detects bot authors via GitHub's GraphQL `Actor.__typename` field: most bot/App reviewers (whose accounts GitHub types as `Bot`) are covered automatically, without maintaining a list of known bot logins
 
 ## How it works
 
