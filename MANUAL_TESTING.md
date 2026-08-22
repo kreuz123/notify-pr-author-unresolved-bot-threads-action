@@ -67,4 +67,22 @@ For each scenario above, manually check:
 
 Record results using a table with columns: Scenario / Preconditions / Steps /
 Expected Result / Actual Result, so the test plan can be re-run for future
-regression testing.
+regression testing. Use the blank template below to log results for each run:
+
+| # | Scenario | Preconditions | Steps | Expected Result | Actual Result |
+|---|----------|---------------|-------|------------------|---------------|
+| 1 |          |               |       |                  |               |
+| 2 |          |               |       |                  |               |
+| 3 |          |               |       |                  |               |
+| 4 |          |               |       |                  |               |
+| 5 |          |               |       |                  |               |
+| 6 |          |               |       |                  |               |
+| 7 |          |               |       |                  |               |
+| 8 |          |               |       |                  |               |
+| 9 |          |               |       |                  |               |
+| 10 |         |               |       |                  |               |
+| 11 |         |               |       |                  |               |
+| 12 |         |               |       |                  |               |
+| 13 |         |               |       |                  |               |
+| 14 |         |               |       |                  |               |
+| 15 |         |               |       |                  |               |
