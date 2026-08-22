@@ -61,9 +61,9 @@ jobs:
 
 Use `comment-template` to customize the reminder comment. The template supports the following placeholders:
 
-- `{author}` — always renders as an `@mention` so the PR author is notified. If omitted from your template, the mention is prepended automatically.
+- `{author}` — always renders as an `@mention`, notifying the PR author. If omitted from your template, the mention is prepended automatically.
 - `{unresolvedCount}` — the number of unresolved automated review threads.
-- `{threadList}` — the list of unresolved threads. If omitted from your template, the thread list is appended automatically so it's never lost.
+- `{threadList}` — the list of unresolved threads. If omitted from your template, the thread list is appended automatically to ensure it's never lost.
 
 ```yaml
 steps:
