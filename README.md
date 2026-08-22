@@ -1,6 +1,6 @@
 # Notify PR Author of Unresolved Bot Review Threads
 
-A GitHub Action that reminds the pull request author to resolve open review threads started by an automated reviewer (such as Copilot code review, or any other bot/App-based review integration) once all requested human reviewers have approved.
+A GitHub Action that reminds the PR author to resolve open review threads started by an automated reviewer (e.g. Copilot) once all human reviewers have approved.
 
 ## Features
 
