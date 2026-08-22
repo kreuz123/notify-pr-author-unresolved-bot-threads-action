@@ -77,8 +77,3 @@ However, there are {unresolvedCount} unresolved review thread(s) started by an a
 
 {threadList}
 ```
-
-## Manual testing
-
-See [MANUAL_TESTING.md](MANUAL_TESTING.md) for a manual test plan covering
-end-to-end scenarios in a real GitHub repository.
