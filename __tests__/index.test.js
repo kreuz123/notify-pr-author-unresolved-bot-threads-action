@@ -106,7 +106,7 @@ describe("run", () => {
     expect(github.getOctokit).not.toHaveBeenCalled();
   });
 
-  test("setFailed when pull_request.number is zero or negative", async () => {
+test("setFailed when pull_request.number is zero", async () => {
     github.context.payload = { pull_request: { number: 0, user: { login: "author" } } };
 
     await run();
