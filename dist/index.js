@@ -44,7 +44,7 @@ async function run() {
     const prAuthor = github.context.payload.pull_request?.user?.login;
     if (!prAuthor) throw new Error("Pull request author could not be determined from the event payload.");
 
-    const commentTemplate = core.getInput("comment-template");
+    const commentTemplate = core.getInput("comment-template", { trimWhitespace: false });
     const commentBody = buildCommentBody(commentTemplate, {
       author: prAuthor,
       unresolvedCount: count,

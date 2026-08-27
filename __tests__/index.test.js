@@ -112,6 +112,67 @@ describe("run", () => {
     },
   );
 
+  // BASELINE TEST: documents current behavior when pr-number input is omitted.
+  // The current implementation does NOT fall back to github.context.payload.pull_request.number.
+  // This test locks in the current behavior as a baseline before any refactor to make pr-number optional.
+  test("[BASELINE] setFailed when pr-number input is omitted, even if github.context.payload.pull_request.number is available (current behavior)", async () => {
+    github.context.payload = {
+      pull_request: {
+        number: 42,
+        user: { login: "author" },
+      },
+    };
+
+    const inputs = {
+      "all-approved": "true",
+      // pr-number intentionally omitted — getInput returns "" by default
+      token: "token",
+      "comment-template": DEFAULT_COMMENT_TEMPLATE,
+    };
+    core.getInput = jest.fn((name) => inputs[name] ?? "");
+
+    await run();
+
+    // Current implementation treats an empty pr-number as invalid and calls setFailed.
+    // It does NOT auto-derive the PR number from the event context.
+    // If this test starts failing, it means production code has been updated to support fallback.
+    expect(core.setFailed).toHaveBeenCalledWith(
+      expect.stringContaining(`Input "pr-number" must be a positive integer`),
+    );
+    expect(github.getOctokit).not.toHaveBeenCalled();
+    expect(findUnresolvedBotThreads).not.toHaveBeenCalled();
+  });
+
+  // BASELINE TEST: documents that pr-number input (when provided and valid) is used correctly.
+  test("[BASELINE] uses pr-number input when provided and valid", async () => {
+    const threads = [
+      { comments: { nodes: [{ body: "issue", url: "url" }] } },
+    ];
+    findUnresolvedBotThreads.mockResolvedValue(threads);
+    formatThreadList.mockReturnValue("1. [View thread](url) - issue");
+
+    const inputs = {
+      "all-approved": "true",
+      "pr-number": "99",
+      token: "token",
+      "comment-template": DEFAULT_COMMENT_TEMPLATE,
+    };
+    core.getInput = jest.fn((name) => inputs[name] ?? "");
+
+    await run();
+
+    expect(findUnresolvedBotThreads).toHaveBeenCalledWith(
+      expect.anything(),
+      "owner",
+      "repo",
+      99,
+    );
+    expect(createComment).toHaveBeenCalledWith(
+      expect.objectContaining({ issue_number: 99 }),
+    );
+    expect(core.setFailed).not.toHaveBeenCalled();
+  });
+
   test("throws when PR author cannot be determined", async () => {
     github.context.payload = { pull_request: { user: null } };
     findUnresolvedBotThreads.mockResolvedValue([
