@@ -30,12 +30,11 @@ describe("run", () => {
     });
     github.context = {
       repo: { owner: "owner", repo: "repo" },
-      payload: { pull_request: { user: { login: "author" } } },
+      payload: { pull_request: { number: 1, user: { login: "author" } } },
     };
 
     const inputs = {
       "all-approved": "true",
-      "pr-number": "1",
       token: "token",
       "comment-template": DEFAULT_COMMENT_TEMPLATE,
     };
@@ -66,7 +65,6 @@ describe("run", () => {
     async (allApproved) => {
       const inputs = {
         "all-approved": allApproved,
-        "pr-number": "1",
         token: "token",
         "comment-template": DEFAULT_COMMENT_TEMPLATE,
       };
@@ -84,7 +82,7 @@ describe("run", () => {
   test.each(["", "false", "no", "0"])(
     "treats all-approved value %j as not approved",
     async (allApproved) => {
-      const inputs = { "all-approved": allApproved, "pr-number": "1", token: "token" };
+      const inputs = { "all-approved": allApproved, token: "token" };
       core.getInput = jest.fn((name) => inputs[name] ?? "");
 
       await run();
@@ -97,23 +95,30 @@ describe("run", () => {
     },
   );
 
-  test.each(["0", "-1", "abc", "1.5", " ", "3.0"])(
-    "setFailed when pr-number is invalid: %s",
-    async (prNumber) => {
-      const inputs = { "all-approved": "true", "pr-number": prNumber, token: "token" };
-      core.getInput = jest.fn((name) => inputs[name] ?? "");
+  test("setFailed when pull_request.number is not available in event context", async () => {
+    github.context.payload = {};
 
-      await run();
+    await run();
 
-      expect(core.setFailed).toHaveBeenCalledWith(
-        expect.stringContaining(`Input "pr-number" must be a positive integer`),
-      );
-      expect(github.getOctokit).not.toHaveBeenCalled();
-    },
-  );
+    expect(core.setFailed).toHaveBeenCalledWith(
+      expect.stringContaining("A pull request number could not be determined"),
+    );
+    expect(github.getOctokit).not.toHaveBeenCalled();
+  });
+
+test("setFailed when pull_request.number is zero", async () => {
+    github.context.payload = { pull_request: { number: 0, user: { login: "author" } } };
+
+    await run();
+
+    expect(core.setFailed).toHaveBeenCalledWith(
+      expect.stringContaining("A pull request number could not be determined"),
+    );
+    expect(github.getOctokit).not.toHaveBeenCalled();
+  });
 
   test("throws when PR author cannot be determined", async () => {
-    github.context.payload = { pull_request: { user: null } };
+    github.context.payload = { pull_request: { number: 1, user: null } };
     findUnresolvedBotThreads.mockResolvedValue([
       { comments: { nodes: [{ body: "issue", url: "url" }] } },
     ]);
@@ -127,7 +132,8 @@ describe("run", () => {
     expect(createComment).not.toHaveBeenCalled();
   });
 
-  test("creates a comment when unresolved threads exist", async () => {
+  test("derives PR number from event context and creates a comment when unresolved threads exist", async () => {
+    github.context.payload = { pull_request: { number: 42, user: { login: "author" } } };
     const threads = [
       { comments: { nodes: [{ body: "issue", url: "url" }] } },
     ];
@@ -140,7 +146,7 @@ describe("run", () => {
       expect.anything(),
       "owner",
       "repo",
-      1,
+      42,
     );
     expect(core.setOutput).toHaveBeenCalledWith("has-unresolved", "true");
     expect(core.setOutput).toHaveBeenCalledWith("unresolved-count", "1");
@@ -151,7 +157,7 @@ describe("run", () => {
     expect(createComment).toHaveBeenCalledWith({
       owner: "owner",
       repo: "repo",
-      issue_number: 1,
+      issue_number: 42,
       body: expect.stringContaining("@author All reviewers have approved this PR!"),
     });
     expect(createComment.mock.calls[0][0].body).toContain(
@@ -163,7 +169,6 @@ describe("run", () => {
   test("uses a custom comment-template input when provided", async () => {
     const inputs = {
       "all-approved": "true",
-      "pr-number": "1",
       token: "token",
       "comment-template": "Hi {author}, please resolve {unresolvedCount} thread(s):\n{threadList}",
     };

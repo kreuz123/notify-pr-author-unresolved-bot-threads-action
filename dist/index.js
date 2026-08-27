@@ -21,10 +21,10 @@ async function run() {
       return;
     }
 
-    const prNumberInput = core.getInput("pr-number").trim();
-    const prNumber = Number(prNumberInput);
-    if (!/^\d+$/.test(prNumberInput) || !Number.isSafeInteger(prNumber) || prNumber <= 0) {
-      core.setFailed(`Input "pr-number" must be a positive integer. Received: "${prNumberInput}"`);
+    const contextPrNumber = github.context.payload.pull_request?.number;
+    const prNumber = Number(contextPrNumber);
+    if (!Number.isSafeInteger(prNumber) || prNumber <= 0) {
+      core.setFailed("A pull request number could not be determined. Ensure this action runs in a pull_request or pull_request_review event context.");
       return;
     }
 
@@ -44,7 +44,7 @@ async function run() {
     const prAuthor = github.context.payload.pull_request?.user?.login;
     if (!prAuthor) throw new Error("Pull request author could not be determined from the event payload.");
 
-    const commentTemplate = core.getInput("comment-template");
+    const commentTemplate = core.getInput("comment-template", { trimWhitespace: false });
     const commentBody = buildCommentBody(commentTemplate, {
       author: prAuthor,
       unresolvedCount: count,
