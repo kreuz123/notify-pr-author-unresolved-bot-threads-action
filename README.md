@@ -14,7 +14,7 @@ A GitHub Action that reminds the PR author to resolve open review threads starte
 
 1. Expects to run after an independent approval check (such as [`check-all-reviewers-approved-action`](https://github.com/kreuz123/check-all-reviewers-approved-action)) and receives its result via the `all-approved` input.
 2. Skips immediately unless `all-approved` is `true`.
-3. Validates the `pr-number` input.
+3. Derives the PR number from the event context (`github.context.payload.pull_request.number`).
 4. Fetches all review threads with pagination and keeps unresolved threads whose first comment was authored by a `Bot`-type account.
 5. Sets `has-unresolved`, `unresolved-count`, and `thread-list` outputs.
 6. Posts a comment to the PR author only when unresolved bot review threads are found.
@@ -53,7 +53,6 @@ jobs:
       - name: Notify about unresolved automated review threads
         uses: kreuz123/notify-pr-author-unresolved-bot-threads-action@v1
         with:
-          pr-number: ${{ github.event.pull_request.number }}
           all-approved: ${{ steps.approval.outputs.all-approved }}
 ```
 
@@ -69,7 +68,6 @@ Use `comment-template` to customize the reminder comment. The template supports 
 steps:
   - uses: kreuz123/notify-pr-author-unresolved-bot-threads-action@v1
     with:
-      pr-number: ${{ github.event.pull_request.number }}
       all-approved: ${{ steps.approval.outputs.all-approved }}
       comment-template: |
         Hey {author}! There are {unresolvedCount} unresolved automated review thread(s) left:
@@ -93,7 +91,6 @@ However, there are {unresolvedCount} unresolved review thread(s) started by an a
 | Name               | Required | Default               | Description                                                                                                       |
 | ------------------ | -------- | --------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `token`            | No       | `${{ github.token }}` | GitHub token used to read review threads and post the comment.                                                    |
-| `pr-number`        | No       |                        | Pull request number.                                                                                              |
 | `all-approved`     | No       | `"true"`               | Whether the independent check-all-reviewers-approved action found all reviewers approved.                          |
 | `comment-template` | No       | See `action.yml`      | Template for the reminder comment using `{author}`, `{unresolvedCount}`, and `{threadList}`.                       |
 

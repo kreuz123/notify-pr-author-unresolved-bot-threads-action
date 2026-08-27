@@ -21,10 +21,10 @@ async function run() {
       return;
     }
 
-    const prNumberInput = core.getInput("pr-number").trim();
-    const prNumber = Number(prNumberInput);
-    if (!/^\d+$/.test(prNumberInput) || !Number.isSafeInteger(prNumber) || prNumber <= 0) {
-      core.setFailed(`Input "pr-number" must be a positive integer. Received: "${prNumberInput}"`);
+    const contextPrNumber = github.context.payload.pull_request?.number;
+    const prNumber = Number(contextPrNumber);
+    if (!Number.isSafeInteger(prNumber) || prNumber <= 0) {
+      core.setFailed("A pull request number could not be determined. Ensure this action runs in a pull_request or pull_request_review event context.");
       return;
     }
 
